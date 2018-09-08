@@ -1,15 +1,15 @@
 package ccc.y2018.senior;
 
-import java.awt.geom.Point2D;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Stack;
 
 public class RoboThieves {
 
     static char[][] maze;
-
+    
     public static void main(String[] args) {
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -22,44 +22,101 @@ public class RoboThieves {
         }
         int width = Integer.parseInt(mazeSize[0]);
         int height = Integer.parseInt(mazeSize[1]);
-//        maze = new char[width][height];
-        char[][] mazeA = {
-                {'W', 'W', 'W', 'W'},
-                {'W', '.', '.', 'W'},
-                {'W', '.', '.', 'S'},
-                {'W', 'W', 'W', 'W'}};
-        maze = mazeA;
+        maze = new char[width][];
+        for(int i = 0; i < width; i++) {
+            String[] in = {};
+            try {
+                in = br.readLine().trim().split("");
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            char[] a = new char[in.length];
+            for(int j = 0; j < in.length; j++) {
+                a[j] = in[j].charAt(0);
+            }
+            maze[i] = a;
+        }
+        cameraUpdate();
         for (int i = 0; i < maze.length; i++) {
             for (int j = 0; j < maze[i].length; j++) {
-                if (maze[i][j] == '.') {
-                    System.out.println(minimumMoveToLocation(i, j, new Stack<Tuple>()));
+                if (maze[i][j] == '.' || maze[i][j] == 'M') {
+                    Stack x = new Stack<Tuple>();
+                    x.push(new Tuple(i, j));
+                    int min = minimumMoveToLocation(i, j, x);
+                    System.out.println(min == -1 ? min : min -1);
                 }
             }
         }
 
     }
 
+    public static void cameraUpdate() {
+        for(int i = 0; i < maze.length; i++) {
+            for(int j = 0; j < maze[i].length; j++) {
+                if(maze[i][j] == 'C') {
+                    int k = i-1;
+                    int l = j;
+                    while((k > 0 && k < maze.length && l > 0 && l < maze[k].length) && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
+                        if(maze[k][l] != 'L' &&  maze[k][l] != 'U' &&  maze[k][l] != 'D' &&  maze[k][l] != 'R' && maze[k][l] != 'S') {
+                            maze[k][l] = 'M';
+                        }
+                        k--;
+                    }
+                    k = i+1;
+                    l = j;
+                    while((k > 0 && k < maze.length && l > 0 && l < maze[k].length) && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
+                        if(maze[k][l] != 'L' &&  maze[k][l] != 'U' &&  maze[k][l] != 'D' &&  maze[k][l] != 'R' && maze[k][l] != 'S') {
+                            maze[k][l] = 'M';
+                        }
+                        k++;
+                    }
+                    k = i;
+                    l = j+1;
+                    while((k > 0 && k < maze.length && l > 0 && l < maze[k].length) && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
+                        if(maze[k][l] != 'L' &&  maze[k][l] != 'U' &&  maze[k][l] != 'D' &&  maze[k][l] != 'R' && maze[k][l] != 'S') {
+                            maze[k][l] = 'M';
+                        }
+                        l++;
+                    }
+                    k = i;
+                    l = j-1;
+                    while((k > 0 && k < maze.length && l > 0 && l < maze[k].length) && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
+                        if(maze[k][l] != 'L' &&  maze[k][l] != 'U' &&  maze[k][l] != 'D' &&  maze[k][l] != 'R' && maze[k][l] != 'S') {
+                            maze[k][l] = 'M';
+                        }
+                        l--;
+                    }
+                }
+            }
+        }
+    }
+
     public static int minimumMoveToLocation(int row, int col, Stack<Tuple> stack) {
-        if(row < 0 || row >= maze.length || col < 0 || col >= maze[row].length || maze[row][col] == 'W') {
+        if(row < 0 || row >= maze.length || col < 0 || col >= maze[row].length || maze[row][col] == 'W' || maze[row][col] == 'M') {
             stack.pop();
             return -1;
         }
+        
         // Does the spot make me do something
         if (maze[row][col] == 'U') {
-            row--;
-        }
-        if (maze[row][col] == 'D') {
             row++;
         }
-        if (maze[row][col] == 'L') {
-            col--;
+        if (maze[row][col] == 'D') {
+            row--;
         }
-        if (maze[row][col] == 'R') {
+        if (maze[row][col] == 'L') {
             col++;
         }
+        if (maze[row][col] == 'R') {
+            col--;
+        }
         if(maze[row][col] == 'S') {
-            return stack.size();
-        }        
+            int x = stack.size();
+            stack.pop();
+            return x;
+        }
+        
         int min = Integer.MAX_VALUE;
         if (!stack.contains(new Tuple(row + 1, col))) {
             stack.push(new Tuple(row + 1, col));
@@ -102,7 +159,7 @@ class Tuple {
     
     @Override
     public String toString() {
-        return "x: " + x + ", y: " + y + "\n";
+        return "(x: " + x + ", y: " + y + ")";
     }
    
     @Override
