@@ -3,12 +3,15 @@ package ccc.y2018.senior;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Stack;
 
 public class RoboThieves {
 
     static char[][] maze;
+    static int[][] minMaze;
     static Tuple start;
+    static Stack<Tuple> smallestTuple;
 
     public static void main(String[] args) {
 
@@ -23,6 +26,7 @@ public class RoboThieves {
         int width = Integer.parseInt(mazeSize[0]);
         int height = Integer.parseInt(mazeSize[1]);
         maze = new char[width][];
+        minMaze = new int[width][height];
         for (int i = 0; i < width; i++) {
             String[] in = {};
             try {
@@ -33,18 +37,15 @@ public class RoboThieves {
             }
             char[] a = new char[in.length];
             for (int j = 0; j < in.length; j++) {
+                if (in[j].charAt(0) == 'S') {
+                    start = new Tuple(i, j);
+                }
                 a[j] = in[j].charAt(0);
             }
             maze[i] = a;
         }
         cameraUpdate();
-        for (int i = 0; i < maze.length; i++) {
-            for (int j = 0; j < maze[i].length; j++) {
-                if (maze[i][j] == 'S') {
-                    start = new Tuple(i, j);
-                }
-            }
-        }
+
         boolean cameraScam = maze[start.x - 1][start.y] == 'C' || maze[start.x + 1][start.y] == 'C'
                 || maze[start.x][start.y - 1] == 'C' || maze[start.x][start.y + 1] == 'C';
         for (int i = 0; i < maze.length; i++) {
@@ -56,6 +57,7 @@ public class RoboThieves {
                         System.out.println(-1);
                     } else {
                         int min = minimumMoveToLocation(i, j, x);
+                        updateDP();
                         System.out.println(min == -1 ? min : min - 1);
                     }
                 }
@@ -113,17 +115,20 @@ public class RoboThieves {
     }
 
     public static int minimumMoveToLocation(int row, int col, Stack<Tuple> stack) {
+        smallestTuple = new Stack<>();
         return backwards(start.x, start.y, row, col, stack);
     }
 
     public static int backwards(int cRow, int cCol, int gRow, int gCol, Stack<Tuple> stack) {
-        if (cRow < 0 || cRow >= maze.length || cCol < 0 || cCol >= maze[cRow].length || maze[cRow][cCol] == 'W'
-                || maze[cRow][cCol] == 'M') {
+        if (minMaze[gRow][gCol] != 0) {
+            return minMaze[gRow][gCol];
+        }
+        
+        if (cRow < 0 || cRow >= maze.length || cCol < 0 || cCol >= maze[cRow].length || maze[cRow][cCol] == 'W' || maze[cRow][cCol] == 'M') {
             stack.pop();
             return -1;
         }
-
-        // Does the spot make me do something
+        
         if (maze[cRow][cCol] == 'U') {
             cRow--;
         }
@@ -139,9 +144,13 @@ public class RoboThieves {
         if (cRow == gRow && cCol == gCol) {
             int x = stack.size();
             stack.pop();
+            if(smallestTuple.size() == 0 || x < smallestTuple.size()-1) {
+                smallestTuple = (Stack) stack.clone();
+                smallestTuple.push(new Tuple(gRow, gCol));
+            }
             return x;
         }
-
+        
         int min = Integer.MAX_VALUE;
         if (!stack.contains(new Tuple(cRow + 1, cCol))) {
             stack.push(new Tuple(cRow + 1, cCol));
@@ -170,10 +179,17 @@ public class RoboThieves {
         return min;
     }
 
+    public static void updateDP() {
+       while(!smallestTuple.isEmpty()) {
+           Tuple t = smallestTuple.pop();
+           if(smallestTuple.size() != 1) {
+               minMaze[t.x][t.y] = smallestTuple.size();
+           }
+       }
+    }
 }
 
 class Tuple {
-
     public int x;
     public int y;
 
@@ -182,12 +198,10 @@ class Tuple {
         this.y = y;
     }
 
-    @Override
     public String toString() {
         return "(x: " + x + ", y: " + y + ")";
     }
 
-    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Tuple)) {
             return false;
@@ -195,5 +209,4 @@ class Tuple {
         Tuple t = (Tuple) obj;
         return t.x == x && t.y == y;
     }
-
 }
