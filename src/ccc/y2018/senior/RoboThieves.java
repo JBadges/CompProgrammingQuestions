@@ -3,15 +3,20 @@ package ccc.y2018.senior;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Stack;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 public class RoboThieves {
 
     static char[][] maze;
-    static int[][] minMaze;
     static Tuple start;
-    static Stack<Tuple> smallestTuple;
+    static ArrayList<Tuple> dots = new ArrayList<>();
+    static ArrayList<Tuple> cameras = new ArrayList<>();
+    static HashMap<Tuple, Integer> distMap;
 
     public static void main(String[] args) {
 
@@ -24,9 +29,7 @@ public class RoboThieves {
             e.printStackTrace();
         }
         int width = Integer.parseInt(mazeSize[0]);
-        int height = Integer.parseInt(mazeSize[1]);
         maze = new char[width][];
-        minMaze = new int[width][height];
         for (int i = 0; i < width; i++) {
             String[] in = {};
             try {
@@ -37,155 +40,146 @@ public class RoboThieves {
             }
             char[] a = new char[in.length];
             for (int j = 0; j < in.length; j++) {
-                if (in[j].charAt(0) == 'S') {
+                char c = in[j].charAt(0);
+                if (c == 'S') {
                     start = new Tuple(i, j);
                 }
-                a[j] = in[j].charAt(0);
+                if (c == '.') {
+                    dots.add(new Tuple(i, j));
+                }
+                if (c == 'C') {
+                    cameras.add(new Tuple(i, j));
+                }
+                a[j] = c;
             }
             maze[i] = a;
         }
+        dots.add(start);
         cameraUpdate();
-
+        bfs();
         boolean cameraScam = maze[start.x - 1][start.y] == 'C' || maze[start.x + 1][start.y] == 'C'
                 || maze[start.x][start.y - 1] == 'C' || maze[start.x][start.y + 1] == 'C';
-        for (int i = 0; i < maze.length; i++) {
-            for (int j = 0; j < maze[i].length; j++) {
-                if (maze[i][j] == '.' || maze[i][j] == 'M') {
-                    Stack<Tuple> x = new Stack<Tuple>();
-                    x.push(start);
-                    if (cameraScam) {
-                        System.out.println(-1);
-                    } else {
-                        int min = minimumMoveToLocation(i, j, x);
-                        updateDP();
-                        System.out.println(min == -1 ? min : min - 1);
-                    }
+        for (Tuple dot : dots) {
+            if (!dot.equals(start)) {
+                if (!cameraScam) {
+                    System.out.println(distMap.get(dot) == Integer.MAX_VALUE ? -1 : distMap.get(dot));
+                } else {
+                    System.out.println(-1);
                 }
             }
         }
     }
 
     public static void cameraUpdate() {
-        for (int i = 0; i < maze.length; i++) {
-            for (int j = 0; j < maze[i].length; j++) {
-                if (maze[i][j] == 'C') {
-                    int k = i - 1;
-                    int l = j;
-                    while ((k > 0 && k < maze.length && l > 0 && l < maze[k].length)
-                            && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
-                        if (maze[k][l] != 'L' && maze[k][l] != 'U' && maze[k][l] != 'D' && maze[k][l] != 'R'
-                                && maze[k][l] != 'S') {
-                            maze[k][l] = 'M';
-                        }
-                        k--;
+        for (Tuple t : cameras) {
+            int i = t.x;
+            int j = t.y;
+            if (maze[i][j] == 'C') {
+                int k = i - 1;
+                int l = j;
+                while ((k > 0 && k < maze.length && l > 0 && l < maze[k].length)
+                        && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
+                    if (maze[k][l] != 'L' && maze[k][l] != 'U' && maze[k][l] != 'D' && maze[k][l] != 'R'
+                            && maze[k][l] != 'S') {
+                        maze[k][l] = 'M';
                     }
-                    k = i + 1;
-                    l = j;
-                    while ((k > 0 && k < maze.length && l > 0 && l < maze[k].length)
-                            && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
-                        if (maze[k][l] != 'L' && maze[k][l] != 'U' && maze[k][l] != 'D' && maze[k][l] != 'R'
-                                && maze[k][l] != 'S') {
-                            maze[k][l] = 'M';
-                        }
-                        k++;
+                    k--;
+                }
+                k = i + 1;
+                l = j;
+                while ((k > 0 && k < maze.length && l > 0 && l < maze[k].length)
+                        && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
+                    if (maze[k][l] != 'L' && maze[k][l] != 'U' && maze[k][l] != 'D' && maze[k][l] != 'R'
+                            && maze[k][l] != 'S') {
+                        maze[k][l] = 'M';
                     }
-                    k = i;
-                    l = j + 1;
-                    while ((k > 0 && k < maze.length && l > 0 && l < maze[k].length)
-                            && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
-                        if (maze[k][l] != 'L' && maze[k][l] != 'U' && maze[k][l] != 'D' && maze[k][l] != 'R'
-                                && maze[k][l] != 'S') {
-                            maze[k][l] = 'M';
-                        }
-                        l++;
+                    k++;
+                }
+                k = i;
+                l = j + 1;
+                while ((k > 0 && k < maze.length && l > 0 && l < maze[k].length)
+                        && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
+                    if (maze[k][l] != 'L' && maze[k][l] != 'U' && maze[k][l] != 'D' && maze[k][l] != 'R'
+                            && maze[k][l] != 'S') {
+                        maze[k][l] = 'M';
                     }
-                    k = i;
-                    l = j - 1;
-                    while ((k > 0 && k < maze.length && l > 0 && l < maze[k].length)
-                            && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
-                        if (maze[k][l] != 'L' && maze[k][l] != 'U' && maze[k][l] != 'D' && maze[k][l] != 'R'
-                                && maze[k][l] != 'S') {
-                            maze[k][l] = 'M';
-                        }
-                        l--;
+                    l++;
+                }
+                k = i;
+                l = j - 1;
+                while ((k > 0 && k < maze.length && l > 0 && l < maze[k].length)
+                        && (maze[k][l] != 'W' && maze[k][l] != 'M')) {
+                    if (maze[k][l] != 'L' && maze[k][l] != 'U' && maze[k][l] != 'D' && maze[k][l] != 'R'
+                            && maze[k][l] != 'S') {
+                        maze[k][l] = 'M';
                     }
+                    l--;
                 }
             }
         }
     }
 
-    public static int minimumMoveToLocation(int row, int col, Stack<Tuple> stack) {
-        smallestTuple = new Stack<>();
-        return backwards(start.x, start.y, row, col, stack);
-    }
+    public static void bfs() {
+        distMap = new HashMap<>();
+        HashMap<Tuple, Boolean> flagMap = new HashMap<>();
 
-    public static int backwards(int cRow, int cCol, int gRow, int gCol, Stack<Tuple> stack) {
-        if (minMaze[gRow][gCol] != 0) {
-            return minMaze[gRow][gCol];
+        for (Tuple t : dots) {
+            flagMap.put(t, false);
+            distMap.put(t, Integer.MAX_VALUE);
         }
-        
-        if (cRow < 0 || cRow >= maze.length || cCol < 0 || cCol >= maze[cRow].length || maze[cRow][cCol] == 'W' || maze[cRow][cCol] == 'M') {
-            stack.pop();
-            return -1;
-        }
-        
-        if (maze[cRow][cCol] == 'U') {
-            cRow--;
-        }
-        if (maze[cRow][cCol] == 'D') {
-            cRow++;
-        }
-        if (maze[cRow][cCol] == 'L') {
-            cCol--;
-        }
-        if (maze[cRow][cCol] == 'R') {
-            cCol++;
-        }
-        if (cRow == gRow && cCol == gCol) {
-            int x = stack.size();
-            stack.pop();
-            if(smallestTuple.size() == 0 || x < smallestTuple.size()-1) {
-                smallestTuple = (Stack) stack.clone();
-                smallestTuple.push(new Tuple(gRow, gCol));
+        Queue<Tuple> q = new LinkedList<>();
+        q.add(start);
+        distMap.put(start, 0);
+        while (!q.isEmpty()) {
+            Tuple v = q.poll();
+            for (Tuple t : validMovesFrom(v)) {
+                if (!flagMap.get(t)) {
+                    flagMap.put(t, true);
+                    distMap.put(t, distMap.get(v) + 1);
+                    q.add(t);
+                }
             }
-            return x;
         }
-        
-        int min = Integer.MAX_VALUE;
-        if (!stack.contains(new Tuple(cRow + 1, cCol))) {
-            stack.push(new Tuple(cRow + 1, cCol));
-            int tempMin = backwards(cRow + 1, cCol, gRow, gCol, stack);
-            min = Math.min(min, tempMin == -1 ? Integer.MAX_VALUE : tempMin);
-        }
-        if (!stack.contains(new Tuple(cRow - 1, cCol))) {
-            stack.push(new Tuple(cRow - 1, cCol));
-            int tempMin = backwards(cRow - 1, cCol, gRow, gCol, stack);
-            min = Math.min(min, tempMin == -1 ? Integer.MAX_VALUE : tempMin);
-        }
-        if (!stack.contains(new Tuple(cRow, cCol + 1))) {
-            stack.push(new Tuple(cRow, cCol + 1));
-            int tempMin = backwards(cRow, cCol + 1, gRow, gCol, stack);
-            min = Math.min(min, tempMin == -1 ? Integer.MAX_VALUE : tempMin);
-        }
-        if (!stack.contains(new Tuple(cRow, cCol - 1))) {
-            stack.push(new Tuple(cRow, cCol - 1));
-            int tempMin = backwards(cRow, cCol - 1, gRow, gCol, stack);
-            min = Math.min(min, tempMin == -1 ? Integer.MAX_VALUE : tempMin);
-        }
-        if (min == Integer.MAX_VALUE) {
-            min = -1;
-        }
-        stack.pop();
-        return min;
     }
 
-    public static void updateDP() {
-       while(!smallestTuple.isEmpty()) {
-           Tuple t = smallestTuple.pop();
-           if(smallestTuple.size() != 1) {
-               minMaze[t.x][t.y] = smallestTuple.size();
-           }
-       }
+    public static List<Tuple> validMovesFrom(Tuple t) {
+        List<Tuple> moves = new ArrayList<>();
+        Tuple up = t.up();
+        Tuple down = t.down();
+        Tuple left = t.left();
+        Tuple right = t.right();
+        List<Tuple> directions = new ArrayList<>(Arrays.asList(up, down, left, right));
+        for (Tuple tu : directions) {
+            if (tu.x < 0 || tu.x >= maze.length || tu.y < 0 || tu.y >= maze[tu.x].length) {
+                continue;
+            }
+            int counter = 0;
+            while (maze[tu.x][tu.y] == 'L' || maze[tu.x][tu.y] == 'R' || maze[tu.x][tu.y] == 'U'
+                    || maze[tu.x][tu.y] == 'D') {
+                if (counter > 100 * 100) {
+                    break;
+                }
+                switch (maze[tu.x][tu.y]) {
+                case 'L':
+                    tu = tu.left();
+                    break;
+                case 'R':
+                    tu = tu.right();
+                    break;
+                case 'D':
+                    tu = tu.down();
+                    break;
+                case 'U':
+                    tu = tu.up();
+                    break;
+                }
+                counter++;
+            }
+            if (!(maze[tu.x][tu.y] == 'W' || maze[tu.x][tu.y] == 'M' || maze[tu.x][tu.y] == 'S' || counter >= 100)) {
+                moves.add(tu);
+            }
+        }
+        return moves;
     }
 }
 
@@ -198,15 +192,36 @@ class Tuple {
         this.y = y;
     }
 
+    public Tuple up() {
+        return new Tuple(x - 1, y);
+    }
+
+    public Tuple down() {
+        return new Tuple(x + 1, y);
+    }
+
+    public Tuple left() {
+        return new Tuple(x, y - 1);
+    }
+
+    public Tuple right() {
+        return new Tuple(x, y + 1);
+    }
+
+    @Override
     public String toString() {
         return "(x: " + x + ", y: " + y + ")";
     }
 
+    @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Tuple)) {
-            return false;
-        }
         Tuple t = (Tuple) obj;
         return t.x == x && t.y == y;
     }
+
+    @Override
+    public int hashCode() {
+        return x * x * x + y * y * y;
+    }
+
 }
