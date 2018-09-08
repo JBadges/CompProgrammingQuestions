@@ -3,7 +3,6 @@ package ccc.y2018.senior;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.Stack;
 
 public class RoboThieves {
@@ -38,16 +37,22 @@ public class RoboThieves {
             maze[i] = a;
         }
         cameraUpdate();
-        for (int i = 0; i < maze.length; i++) {
-            for (int j = 0; j < maze[i].length; j++) {
-                if (maze[i][j] == '.' || maze[i][j] == 'M') {
-                    Stack x = new Stack<Tuple>();
-                    x.push(new Tuple(i, j));
-                    int min = minimumMoveToLocation(i, j, x);
-                    System.out.println(min == -1 ? min : min -1);
-                }
-            }
-        }
+//        for (int i = 0; i < maze.length; i++) {
+//            for (int j = 0; j < maze[i].length; j++) {
+//                if (maze[i][j] == '.' || maze[i][j] == 'M') {
+//                    Stack x = new Stack<Tuple>();
+//                    x.push(new Tuple(i, j));
+//                    int min = minimumMoveToLocation(i, j, x);
+//                    System.out.println(min == -1 ? min : min -1);
+//                }
+//            }
+//        }
+        int i = 2;
+        int j = 1;
+        Stack x = new Stack<Tuple>();
+        x.push(new Tuple(i, j));
+        int min = minimumMoveToLocation(i, j, x);
+        System.out.println(min == -1 ? min : min -1);
 
     }
 
@@ -93,6 +98,7 @@ public class RoboThieves {
     }
 
     public static int minimumMoveToLocation(int row, int col, Stack<Tuple> stack) {
+        System.out.println(stack);
         if(row < 0 || row >= maze.length || col < 0 || col >= maze[row].length || maze[row][col] == 'W' || maze[row][col] == 'M') {
             stack.pop();
             return -1;
