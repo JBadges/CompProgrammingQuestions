@@ -122,7 +122,6 @@ public class RoboThieves {
     public static void bfs() {
         distMap = new HashMap<>();
         HashMap<Tuple, Boolean> flagMap = new HashMap<>();
-
         for (Tuple t : dots) {
             flagMap.put(t, false);
             distMap.put(t, Integer.MAX_VALUE);
@@ -175,8 +174,8 @@ public class RoboThieves {
                 }
                 counter++;
             }
-            if (!(maze[tu.x][tu.y] == 'W' || maze[tu.x][tu.y] == 'M' || maze[tu.x][tu.y] == 'S' || counter >= 100)) {
-                moves.add(tu);
+            if (!(maze[tu.x][tu.y] == 'W' || maze[tu.x][tu.y] == 'M' || maze[tu.x][tu.y] == 'S' || maze[tu.x][tu.y] == 'C' || counter >= 100)) {
+                moves.add(new Tuple(tu.x, tu.y));
             }
         }
         return moves;
@@ -186,12 +185,18 @@ public class RoboThieves {
 class Tuple {
     public int x;
     public int y;
+    private int hash;
 
     public Tuple(int x, int y) {
         this.x = x;
         this.y = y;
+        hash = x * y + x - y*y;
     }
 
+    public Tuple clone() {
+        return new Tuple(x, y);
+    }
+    
     public Tuple up() {
         return new Tuple(x - 1, y);
     }
@@ -221,7 +226,6 @@ class Tuple {
 
     @Override
     public int hashCode() {
-        return x * x * x + y * y * y;
+        return hash;
     }
-
 }
